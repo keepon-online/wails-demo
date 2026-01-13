@@ -1,0 +1,78 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install NSIS
+        run: choco install nsis -y
+
+      - name: Install frontend dependencies
+        run: npm install
+        working-directory: frontend
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+          echo "Version: $version"
+
+      - name: Build Windows Application
+        run: |
+          $version = "${{ steps.version.outputs.VERSION }}"
+          wails build -platform windows/amd64 -ldflags "-X 'wails-demo/internal/updater.Version=v$version'" -o wails-demo.exe
+
+      - name: Create dist directory
+        run: mkdir dist -Force
+
+      - name: Update NSIS script version
+        run: |
+          $version = "${{ steps.version.outputs.VERSION }}"
+          $nsiContent = Get-Content build/nsis/installer.nsi -Raw
+          $nsiContent = $nsiContent -replace '!define PRODUCT_VERSION "1.0.0"', "!define PRODUCT_VERSION `"$version`""
+          Set-Content build/nsis/installer.nsi $nsiContent
+
+      - name: Build NSIS Installer
+        run: |
+          & "C:\Program Files (x86)\NSIS\makensis.exe" build\nsis\installer.nsi
+
+      - name: Compress Portable Version
+        run: Compress-Archive -Path build/bin/wails-demo.exe -DestinationPath dist/wails-demo_windows_amd64.zip
+
+      - name: List dist contents
+        run: Get-ChildItem dist
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/wails-demo_windows_amd64.zip
+            dist/wails-demo-setup-*.exe
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
