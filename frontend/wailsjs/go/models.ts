@@ -7,6 +7,7 @@ export namespace updater {
 	    releaseNotes: string;
 	    releaseUrl: string;
 	    installerUrl: string;
+	    debugInfo: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new UpdateInfo(source);
@@ -20,6 +21,7 @@ export namespace updater {
 	        this.releaseNotes = source["releaseNotes"];
 	        this.releaseUrl = source["releaseUrl"];
 	        this.installerUrl = source["installerUrl"];
+	        this.debugInfo = source["debugInfo"];
 	    }
 	}
 	export class UpdateProgress {

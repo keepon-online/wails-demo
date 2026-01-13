@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 
@@ -37,6 +38,7 @@ type UpdateInfo struct {
 	ReleaseNotes   string `json:"releaseNotes"`   // 发布说明
 	ReleaseURL     string `json:"releaseUrl"`     // 发布页面 URL
 	InstallerURL   string `json:"installerUrl"`   // 安装包下载 URL
+	DebugInfo      string `json:"debugInfo"`      // 调试信息
 }
 
 // UpdateProgress 更新进度信息
@@ -128,9 +130,14 @@ func (u *Updater) CheckForUpdate(ctx context.Context) (*UpdateInfo, error) {
 	// 移除版本号前缀 v
 	currentVersion := strings.TrimPrefix(Version, "v")
 
-	// 创建更新器
+	// 创建更新器，配置资源过滤器
+	// go-selfupdate 需要匹配格式: {name}_{os}_{arch}.{ext}
 	updater, err := selfupdate.NewUpdater(selfupdate.Config{
 		Source: u.source,
+		// 匹配资源名称: wails-demo_windows_amd64.zip 或 wails-demo-windows-amd64.zip
+		Filters: []string{
+			fmt.Sprintf(`wails-demo[_-]%s[_-]%s\.zip`, runtime.GOOS, runtime.GOARCH),
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("创建更新器失败: %w", err)
@@ -140,11 +147,15 @@ func (u *Updater) CheckForUpdate(ctx context.Context) (*UpdateInfo, error) {
 	repoPath := fmt.Sprintf("%s/%s", u.owner, u.repo)
 	latest, found, err := updater.DetectLatest(ctx, selfupdate.ParseSlug(repoPath))
 	if err != nil {
+		info.DebugInfo = fmt.Sprintf("检查更新出错: %v", err)
 		return nil, fmt.Errorf("检查更新失败: %w", err)
 	}
 
+	info.DebugInfo = fmt.Sprintf("found=%v, repo=%s, currentVersion=%s", found, repoPath, currentVersion)
+
 	if !found {
 		info.LatestVersion = Version
+		info.DebugInfo += ", 未找到匹配的 Release 资源"
 		return info, nil
 	}
 
@@ -152,6 +163,7 @@ func (u *Updater) CheckForUpdate(ctx context.Context) (*UpdateInfo, error) {
 	info.LatestVersion = "v" + latest.Version()
 	info.ReleaseNotes = latest.ReleaseNotes
 	info.ReleaseURL = latest.URL
+	info.DebugInfo += fmt.Sprintf(", latestVersion=%s", latest.Version())
 
 	// 构建安装包下载 URL
 	if u.mode == ModeInstaller {
@@ -187,6 +199,9 @@ func (u *Updater) downloadAndReplaceBinary(ctx context.Context) (*UpdateProgress
 	// 创建更新器
 	updater, err := selfupdate.NewUpdater(selfupdate.Config{
 		Source: u.source,
+		Filters: []string{
+			fmt.Sprintf(`wails-demo[_-]%s[_-]%s\.zip`, runtime.GOOS, runtime.GOARCH),
+		},
 	})
 	if err != nil {
 		return &UpdateProgress{
@@ -308,3 +323,6 @@ func (u *Updater) Cleanup() {
 		os.RemoveAll(u.tempDir)
 	}
 }
+
+// 确保 regexp 被使用（用于 Filters 模式）
+var _ = regexp.Compile

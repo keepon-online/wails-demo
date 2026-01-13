@@ -130,14 +130,27 @@ async function checkUpdate() {
         const info = await CheckForUpdate();
         latestUpdateInfo = info;
         
+        // 调试信息输出到控制台
+        console.log('更新检查结果:', info);
+        
         if (info.available) {
             statusText.textContent = `发现新版本: ${info.latestVersion}`;
             statusText.className = 'status-text available';
             applyUpdateBtn.classList.remove('hidden');
         } else {
-            statusText.textContent = `已是最新版本 (${info.currentVersion})`;
+            // 显示更多信息帮助调试
+            let msg = `已是最新版本 (${info.currentVersion})`;
+            if (info.latestVersion && info.latestVersion !== info.currentVersion) {
+                msg = `当前: ${info.currentVersion}, 远程: ${info.latestVersion}`;
+            }
+            statusText.textContent = msg;
             statusText.className = 'status-text latest';
             applyUpdateBtn.classList.add('hidden');
+        }
+        
+        // 如果有调试信息，在控制台显示
+        if (info.debugInfo) {
+            console.log('调试信息:', info.debugInfo);
         }
     } catch (err) {
         console.error('检查更新失败:', err);
