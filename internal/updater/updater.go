@@ -130,6 +130,11 @@ func (u *Updater) CheckForUpdate(ctx context.Context) (*UpdateInfo, error) {
 	// 移除版本号前缀 v
 	currentVersion := strings.TrimPrefix(Version, "v")
 
+	// 如果是开发版本，设置为 0.0.0 以便总是检测到更新
+	if currentVersion == "dev" || currentVersion == "" {
+		currentVersion = "0.0.0"
+	}
+
 	// 创建更新器，配置资源过滤器
 	// go-selfupdate 需要匹配格式: {name}_{os}_{arch}.{ext}
 	updater, err := selfupdate.NewUpdater(selfupdate.Config{
@@ -173,7 +178,7 @@ func (u *Updater) CheckForUpdate(ctx context.Context) (*UpdateInfo, error) {
 		)
 	}
 
-	// 比较版本
+	// 比较版本（使用 go-selfupdate 的版本比较）
 	if latest.GreaterThan(currentVersion) {
 		info.Available = true
 	}
