@@ -2,7 +2,7 @@ import './style.css';
 import './app.css';
 
 import logo from './assets/images/logo-universal.png';
-import { Greet, GetVersion, CheckForUpdate, ApplyUpdate, GetPlatformInfo } from '../wailsjs/go/main/App';
+import { Greet, GetVersion, CheckForUpdate, ApplyUpdate, GetPlatformInfo, RestartApp } from '../wailsjs/go/main/App';
 
 // 应用 HTML 结构
 document.querySelector('#app').innerHTML = `
@@ -194,18 +194,33 @@ async function applyUpdate() {
         progressText.textContent = '100%';
         
         if (result.needRestart) {
-            statusText.textContent = result.message;
+            statusText.textContent = '更新已就绪，点击下方按钮立即重启';
             statusText.className = 'status-text ready';
-            applyUpdateBtn.textContent = '重启应用';
+            applyUpdateBtn.textContent = '🔄 立即重启';
             applyUpdateBtn.disabled = false;
-            applyUpdateBtn.onclick = () => {
-                // 提示用户手动重启
-                alert('请关闭应用后重新打开以完成更新');
+            applyUpdateBtn.onclick = async () => {
+                applyUpdateBtn.disabled = true;
+                applyUpdateBtn.textContent = '正在重启...';
+                try {
+                    await RestartApp();
+                } catch (err) {
+                    console.error('重启失败:', err);
+                    statusText.textContent = '自动重启失败，请手动关闭并重新打开应用';
+                    statusText.className = 'status-text error';
+                    applyUpdateBtn.textContent = '重启失败';
+                }
             };
         }
     } catch (err) {
         console.error('应用更新失败:', err);
-        statusText.textContent = '更新失败，请稍后重试';
+        // 显示详细错误信息
+        let errMsg = '更新失败';
+        if (err && err.message) {
+            errMsg = err.message;
+        } else if (typeof err === 'string') {
+            errMsg = err;
+        }
+        statusText.textContent = errMsg;
         statusText.className = 'status-text error';
         applyUpdateBtn.disabled = false;
         applyUpdateBtn.textContent = '重试下载';

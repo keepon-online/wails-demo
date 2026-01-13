@@ -49,3 +49,8 @@ func (a *App) ApplyUpdate() (*updater.UpdateProgress, error) {
 func (a *App) GetPlatformInfo() string {
 	return a.updater.GetPlatformInfo()
 }
+
+// RestartApp 重启应用以完成更新
+func (a *App) RestartApp() error {
+	return updater.RestartApp()
+}

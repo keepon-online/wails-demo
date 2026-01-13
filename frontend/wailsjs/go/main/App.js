@@ -21,3 +21,7 @@ export function GetVersion() {
 export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
 }
+
+export function RestartApp() {
+  return window['go']['main']['App']['RestartApp']();
+}

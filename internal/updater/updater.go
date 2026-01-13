@@ -329,5 +329,28 @@ func (u *Updater) Cleanup() {
 	}
 }
 
+// RestartApp 重启应用程序
+func RestartApp() error {
+	// 获取当前可执行文件路径
+	exe, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("获取可执行文件路径失败: %w", err)
+	}
+
+	// 启动新进程
+	cmd := exec.Command(exe)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("启动新进程失败: %w", err)
+	}
+
+	// 退出当前进程
+	os.Exit(0)
+	return nil
+}
+
 // 确保 regexp 被使用（用于 Filters 模式）
 var _ = regexp.Compile
