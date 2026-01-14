@@ -14,6 +14,10 @@ export function GetPlatformInfo() {
   return window['go']['main']['App']['GetPlatformInfo']();
 }
 
+export function GetTraySettings() {
+  return window['go']['main']['App']['GetTraySettings']();
+}
+
 export function GetVersion() {
   return window['go']['main']['App']['GetVersion']();
 }
@@ -24,4 +28,8 @@ export function Greet(arg1) {
 
 export function RestartApp() {
   return window['go']['main']['App']['RestartApp']();
+}
+
+export function SetTraySettings(arg1) {
+  return window['go']['main']['App']['SetTraySettings'](arg1);
 }

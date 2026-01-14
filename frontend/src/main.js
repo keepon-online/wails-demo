@@ -2,7 +2,7 @@ import './style.css';
 import './app.css';
 
 import logo from './assets/images/logo-universal.png';
-import { Greet, GetVersion, CheckForUpdate, ApplyUpdate, GetPlatformInfo, RestartApp } from '../wailsjs/go/main/App';
+import { Greet, GetVersion, CheckForUpdate, ApplyUpdate, GetPlatformInfo, RestartApp, GetTraySettings, SetTraySettings } from '../wailsjs/go/main/App';
 
 // 应用 HTML 结构
 document.querySelector('#app').innerHTML = `
@@ -20,6 +20,24 @@ document.querySelector('#app').innerHTML = `
             <div class="input-box">
                 <input class="input" id="name" type="text" placeholder="输入您的姓名..." autocomplete="off" />
                 <button class="btn btn-primary" id="greet-btn">打招呼</button>
+            </div>
+        </section>
+
+        <!-- 设置区域 -->
+        <section class="settings-section">
+            <div class="settings-header">
+                <span class="settings-icon">⚙️</span>
+                <span class="settings-title">设置</span>
+            </div>
+            <div class="settings-item">
+                <label class="toggle-label" for="minimize-to-tray">
+                    <span class="toggle-text">关闭时最小化到系统托盘</span>
+                    <span class="toggle-hint">启用后，点击关闭按钮将隐藏窗口到托盘</span>
+                </label>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="minimize-to-tray">
+                    <span class="toggle-slider"></span>
+                </label>
             </div>
         </section>
 
@@ -62,6 +80,7 @@ const applyUpdateBtn = document.getElementById('apply-update-btn');
 const progressContainer = document.getElementById('progress-container');
 const progressBar = document.getElementById('progress-bar');
 const progressText = document.getElementById('progress-text');
+const minimizeToTrayToggle = document.getElementById('minimize-to-tray');
 
 // 存储最新版本信息
 let latestUpdateInfo = null;
@@ -88,8 +107,32 @@ async function init() {
         platformInfo.textContent = '平台: 未知';
     }
     
+    // 加载托盘设置
+    await loadTraySettings();
+    
     // 自动检查更新
     await checkUpdate();
+}
+
+// 加载托盘设置
+async function loadTraySettings() {
+    try {
+        const settings = await GetTraySettings();
+        minimizeToTrayToggle.checked = settings.minimizeToTray;
+    } catch (err) {
+        console.error('加载托盘设置失败:', err);
+    }
+}
+
+// 保存托盘设置
+async function saveTraySettings() {
+    try {
+        await SetTraySettings({
+            minimizeToTray: minimizeToTrayToggle.checked
+        });
+    } catch (err) {
+        console.error('保存托盘设置失败:', err);
+    }
 }
 
 // 问候功能
@@ -235,6 +278,7 @@ nameElement.addEventListener('keypress', (e) => {
 });
 checkUpdateBtn.addEventListener('click', checkUpdate);
 applyUpdateBtn.addEventListener('click', applyUpdate);
+minimizeToTrayToggle.addEventListener('change', saveTraySettings);
 
 // 启动初始化
 init();

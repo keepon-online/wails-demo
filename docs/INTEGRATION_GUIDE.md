@@ -209,8 +209,114 @@ if currentVersion == "dev" {
 
 ---
 
+## 系统托盘集成
+
+### 概述
+
+系统托盘功能允许应用在关闭窗口时最小化到托盘而非退出，用户可通过托盘图标右键菜单操作应用。
+
+### 依赖
+
+```bash
+go get github.com/getlantern/systray
+```
+
+### 1. 创建配置模块
+
+```go
+// internal/config/config.go
+type Config struct {
+    MinimizeToTray bool `json:"minimizeToTray"`
+}
+
+type Store struct {
+    config   *Config
+    filePath string
+    mu       sync.RWMutex
+}
+
+func NewStore() (*Store, error) {
+    // 配置存储在 %APPDATA%/YourApp/config.json
+    configPath, err := getConfigPath()
+    // ...
+}
+```
+
+### 2. 创建托盘模块
+
+```go
+// internal/tray/tray.go
+type Manager struct {
+    configStore    *config.Store
+    showWindowFunc func()
+    hideWindowFunc func()
+    quitFunc       func()
+}
+
+func (m *Manager) Run() {
+    go systray.Run(m.onReady, m.onExit)
+}
+```
+
+托盘图标需要嵌入到模块中：
+
+```go
+//go:embed icon.ico
+var iconFS embed.FS
+```
+
+### 3. 集成到应用
+
+```go
+// main.go
+func main() {
+    configStore, _ := config.NewStore()
+    trayManager := tray.NewManager(configStore)
+    app := NewApp(configStore, trayManager)
+
+    wails.Run(&options.App{
+        OnStartup: app.startup,
+        OnBeforeClose: func(ctx context.Context) bool {
+            if trayManager.ShouldMinimizeToTray() {
+                runtime.WindowHide(ctx)
+                return true // 阻止关闭
+            }
+            return false
+        },
+        OnShutdown: app.shutdown,
+    })
+}
+```
+
+### 4. 前端设置界面
+
+```javascript
+import { GetTraySettings, SetTraySettings } from '../wailsjs/go/main/App';
+
+// 获取设置
+const settings = await GetTraySettings();
+checkbox.checked = settings.minimizeToTray;
+
+// 保存设置
+await SetTraySettings({ minimizeToTray: checkbox.checked });
+```
+
+### 5. 托盘菜单设计
+
+```
+[应用图标]
+├── 显示主窗口
+├── ─────────
+├── ✓ 关闭时最小化到托盘
+├── ─────────
+└── 退出
+```
+
+---
+
 ## 参考链接
 
 - [go-selfupdate 文档](https://github.com/creativeprojects/go-selfupdate)
+- [systray 库](https://github.com/getlantern/systray)
 - [NSIS 手册](https://nsis.sourceforge.io/Docs/)
 - [GitHub Actions](https://docs.github.com/actions)

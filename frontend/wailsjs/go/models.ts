@@ -1,3 +1,20 @@
+export namespace main {
+	
+	export class TraySettings {
+	    minimizeToTray: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new TraySettings(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.minimizeToTray = source["minimizeToTray"];
+	    }
+	}
+
+}
+
 export namespace updater {
 	
 	export class UpdateInfo {

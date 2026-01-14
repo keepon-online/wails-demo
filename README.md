@@ -8,6 +8,7 @@
 - 📦 支持便携版（直接替换 exe）和安装版（NSIS 安装包）
 - 🔄 一键重启完成更新
 - 🎨 现代化 UI 设计（玻璃拟态风格）
+- 🔔 **系统托盘支持** - 可选择关闭时最小化到托盘
 
 ## 📁 项目结构
 
@@ -16,6 +17,11 @@ wails-demo/
 ├── main.go                          # 应用入口
 ├── app.go                           # 应用方法绑定
 ├── internal/
+│   ├── config/
+│   │   └── config.go                # 配置管理模块
+│   ├── tray/
+│   │   ├── tray.go                  # 系统托盘模块
+│   │   └── icon.ico                 # 托盘图标
 │   └── updater/
 │       └── updater.go               # 🔑 自动更新核心模块
 ├── frontend/
@@ -32,6 +38,7 @@ wails-demo/
 ├── build.bat                        # 本地构建脚本
 └── wails.json                       # Wails 配置
 ```
+
 
 ## 🚀 快速开始
 
