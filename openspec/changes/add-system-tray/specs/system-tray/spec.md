@@ -118,3 +118,28 @@ Then "最小化到托盘"选项仍为开启状态
 ## Related Specs
 
 无
+
+---
+
+## Implementation Status
+
+✅ **已实现** (2026-01-14)
+
+### 实现文件
+
+| 文件 | 用途 |
+|------|------|
+| `internal/config/config.go` | 配置管理，支持 REQ-TRAY-005 |
+| `internal/tray/tray.go` | 托盘管理，支持 REQ-TRAY-001/002/004 |
+| `main.go` | OnBeforeClose 钩子，支持 REQ-TRAY-003 |
+| `app.go` | 前端 API 绑定 |
+| `frontend/src/main.js` | 设置界面 |
+
+### 配置存储
+
+- 路径: `%APPDATA%/WailsDemo/config.json`
+- 格式: `{"minimizeToTray": boolean}`
+
+### 依赖库
+
+- `github.com/getlantern/systray v1.2.2`
