@@ -8,6 +8,7 @@ import (
 	"wails-demo/internal/tray"
 	"wails-demo/internal/updater"
 
+	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -77,6 +78,17 @@ func (a *App) GetPlatformInfo() string {
 // RestartApp 重启应用以完成更新
 func (a *App) RestartApp() error {
 	return updater.RestartApp()
+}
+
+// onSecondInstanceLaunch 当尝试启动第二个实例时调用
+func (a *App) onSecondInstanceLaunch(secondInstanceData options.SecondInstanceData) {
+	// 显示并置顶窗口
+	runtime.WindowShow(a.ctx)
+	if runtime.WindowIsMinimised(a.ctx) {
+		runtime.WindowUnminimise(a.ctx)
+	}
+	runtime.WindowSetAlwaysOnTop(a.ctx, true)
+	runtime.WindowSetAlwaysOnTop(a.ctx, false)
 }
 
 // ===== 托盘设置相关 API =====

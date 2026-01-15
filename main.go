@@ -51,6 +51,10 @@ func main() {
 			return false // 返回 false 允许正常关闭
 		},
 		OnShutdown: app.shutdown,
+		SingleInstanceLock: &options.SingleInstanceLock{
+			UniqueId:               "9e32400e-7c98-11ef-9388-745a05051996",
+			OnSecondInstanceLaunch: app.onSecondInstanceLaunch,
+		},
 		Bind: []interface{}{
 			app,
 		},

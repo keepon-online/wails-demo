@@ -18,6 +18,7 @@ type Manager struct {
 	quitFunc        func()
 	menuMinimize    *systray.MenuItem
 	onReadyCallback func()
+	forceQuit       bool // 强制退出标志，跳过最小化到托盘检查
 }
 
 // NewManager 创建托盘管理器
@@ -93,10 +94,10 @@ func (m *Manager) onReady() {
 					m.menuMinimize.Uncheck()
 				}
 			case <-menuQuit.ClickedCh:
+				m.forceQuit = true // 设置强制退出标志
 				if m.quitFunc != nil {
 					m.quitFunc()
 				}
-				systray.Quit()
 			}
 		}
 	}()
@@ -107,9 +108,17 @@ func (m *Manager) onExit() {
 	// 清理资源
 }
 
-// ShouldMinimizeToTray 检查是否应该最小化到托盘
+// ShouldMinimizeToTray 检查是否应该最小化到托盘（排除强制退出情况）
 func (m *Manager) ShouldMinimizeToTray() bool {
+	if m.forceQuit {
+		return false // 强制退出时不最小化到托盘
+	}
 	return m.configStore.GetMinimizeToTray()
+}
+
+// IsForceQuit 检查是否为强制退出
+func (m *Manager) IsForceQuit() bool {
+	return m.forceQuit
 }
 
 // Quit 退出托盘
